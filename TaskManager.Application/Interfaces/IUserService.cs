@@ -5,7 +5,8 @@ namespace TaskManager.Application.Interfaces;
 public interface IUserService
 {
     Task<Usuario> CreateAsync(string nome, string email, string senha);
-
     Task<List<Usuario>> GetAllAsync();
     Task<Usuario?> GetByIdAsync(Guid id);
+    Task UpdateAsync(Usuario usuario);
+    Task DeleteAsync(Guid id);
 }

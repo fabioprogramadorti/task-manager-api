@@ -20,15 +20,31 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            var response = new
-            {
-                message = ex.Message
-            };
-
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            await HandleExceptionAsync(context, ex);
         }
+    }
+
+    private static Task HandleExceptionAsync(HttpContext context, Exception ex)
+    {
+        var statusCode = HttpStatusCode.InternalServerError;
+
+        
+        if (ex.Message.Contains("não encontrado"))
+            statusCode = HttpStatusCode.NotFound;
+
+        if (ex.Message.Contains("já cadastrado"))
+            statusCode = HttpStatusCode.BadRequest;
+
+        var response = new
+        {
+            status = (int)statusCode,
+            message = ex.Message,
+            timestamp = DateTime.UtcNow
+        };
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)statusCode;
+
+        return context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
 }

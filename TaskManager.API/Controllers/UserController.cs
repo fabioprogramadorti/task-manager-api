@@ -15,12 +15,15 @@ public class UserController : ControllerBase
         _service = service;
     }
 
+    // =========================
+    // 🔹 CREATE
+    // =========================
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] UserCreateDTO dto)
     {
         var user = await _service.CreateAsync(dto.Nome, dto.Email, dto.Senha);
 
-        return Ok(new
+        return CreatedAtAction(nameof(GetById), new { id = user.Id }, new
         {
             user.Id,
             user.Nome,
@@ -28,6 +31,9 @@ public class UserController : ControllerBase
         });
     }
 
+    // =========================
+    // 🔹 GET ALL
+    // =========================
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -40,7 +46,10 @@ public class UserController : ControllerBase
             u.Email
         }));
     }
-    
+
+    // =========================
+    // 🔹 GET BY ID
+    // =========================
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -55,5 +64,40 @@ public class UserController : ControllerBase
             user.Nome,
             user.Email
         });
+    }
+
+    // =========================
+    // 🔹 UPDATE
+    // =========================
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UserCreateDTO dto)
+    {
+        var user = await _service.GetByIdAsync(id);
+
+        if (user == null)
+            return NotFound();
+
+        user.Nome = dto.Nome;
+        user.Email = dto.Email;
+
+        await _service.UpdateAsync(user);
+
+        return NoContent();
+    }
+
+    // =========================
+    // 🔹 DELETE
+    // =========================
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var user = await _service.GetByIdAsync(id);
+
+        if (user == null)
+            return NotFound();
+
+        await _service.DeleteAsync(id);
+
+        return NoContent();
     }
 }

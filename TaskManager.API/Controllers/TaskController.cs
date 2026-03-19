@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.Application.Interfaces;
-using TaskManager.Domain.Entities;
 using TaskManager.Application.DTOs;
+using TaskManager.Domain.Entities;
 using TaskManager.Domain.Enums;
 
 namespace TaskManager.API.Controllers;
@@ -17,6 +17,7 @@ public class TaskController : ControllerBase
         _service = service;
     }
 
+    
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -24,14 +25,19 @@ public class TaskController : ControllerBase
         return Ok(tasks);
     }
 
+    
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var task = await _service.GetByIdAsync(id);
-        if (task == null) return NotFound();
+
+        if (task == null)
+            return NotFound();
+
         return Ok(task);
     }
 
+    
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] TaskCreateDTO dto)
     {
@@ -45,20 +51,57 @@ public class TaskController : ControllerBase
         };
 
         await _service.CreateAsync(task);
-        return Ok(task);
+
+        return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
     }
 
-    [HttpPut]
-    public async Task<IActionResult> Update(TaskItem task)
+    
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] TaskCreateDTO dto)
     {
-        await _service.UpdateAsync(task);
+        var existing = await _service.GetByIdAsync(id);
+
+        if (existing == null)
+            return NotFound();
+
+        existing.Titulo = dto.Titulo;
+        existing.Descricao = dto.Descricao;
+        existing.Status = (StatusTarefa)dto.Status;
+        existing.Prioridade = (Prioridade)dto.Prioridade;
+        existing.UsuarioId = dto.UsuarioId;
+
+        await _service.UpdateAsync(existing);
+
         return NoContent();
     }
 
+    
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
+        var existing = await _service.GetByIdAsync(id);
+
+        if (existing == null)
+            return NotFound();
+
         await _service.DeleteAsync(id);
+
         return NoContent();
+    }
+
+    
+    [HttpGet("filter")]
+    public async Task<IActionResult> GetFiltered([FromQuery] TaskFilterDTO filter)
+    {
+        var result = await _service.GetFilteredAsync(filter);
+        return Ok(result);
+    }
+
+    
+    [HttpGet("resumo/{usuarioId}")]
+    public async Task<IActionResult> GetResumo(Guid usuarioId)
+    {
+        var resumo = await _service.GetResumoAsync(usuarioId);
+        return Ok(resumo);
     }
 }
